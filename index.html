@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Found It — School Lost & Found</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+            rel="stylesheet">
+      <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+      <!-- DECORATIVE BACKGROUND SHAPES -->
+      <div class="deco-layer" aria-hidden="true">
+            <svg class="deco-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="1340" cy="90" r="180" fill="#2B6CB0" opacity="0.06" />
+                  <circle cx="1380" cy="60" r="90" fill="#4A90D9" opacity="0.07" />
+                  <polygon points="−30,0 140,0 −30,180" fill="#1E4F85" opacity="0.05" />
+                  <circle cx="60" cy="220" r="28" fill="#2B6CB0" opacity="0.09" />
+                  <circle cx="105" cy="260" r="14" fill="#4A90D9" opacity="0.08" />
+                  <circle cx="32" cy="285" r="9" fill="#7BB8F0" opacity="0.10" />
+                  <polygon points="0,380 80,310 130,400 50,470" fill="#2A5FA0" opacity="0.06" />
+                  <circle cx="−60" cy="820" r="240" fill="#3A7FCC" opacity="0.05" />
+                  <polygon points="620,870 680,820 740,840 730,900 610,900" fill="#1E4F85" opacity="0.06" />
+                  <circle cx="1400" cy="780" r="100" fill="#4A90D9" opacity="0.06" />
+                  <circle cx="1320" cy="860" r="50" fill="#2B6CB0" opacity="0.07" />
+                  <circle cx="1440" cy="680" r="60" fill="#7BB8F0" opacity="0.05" />
+                  <rect x="1260" y="380" width="200" height="20" rx="10" fill="#2B6CB0" opacity="0.07"
+                        transform="rotate(-35 1260 380)" />
+                  <polygon points="1390,420 1415,445 1390,470 1365,445" fill="#1E4F85" opacity="0.08" />
+                  <rect x="600" y="450" width="120" height="12" rx="6" fill="#4A90D9" opacity="0.05" />
+                  <circle cx="350" cy="150" r="6" fill="#2B6CB0" opacity="0.10" />
+                  <circle cx="430" cy="700" r="8" fill="#4A90D9" opacity="0.08" />
+                  <circle cx="900" cy="200" r="5" fill="#7BB8F0" opacity="0.11" />
+                  <circle cx="1100" cy="560" r="7" fill="#2B6CB0" opacity="0.08" />
+                  <circle cx="200" cy="600" r="10" fill="#3A7FCC" opacity="0.07" />
+                  <circle cx="720" cy="−120" r="320" fill="none" stroke="#2B6CB0" stroke-width="2" opacity="0.06" />
+                  <circle cx="160" cy="880" r="140" fill="none" stroke="#4A90D9" stroke-width="1.5" opacity="0.08" />
+            </svg>
+      </div>
+
+      <!-- NAVIGATION BAR -->
+      <nav>
+            <a class="nav-logo" href="#"><span>FindIt</span></a>
+            <div class="nav-links">
+                  <a href="#" id="nav-home" class="active">Home</a>
+                  <a href="#" id="nav-browse">Found Items</a>
+                  <a href="#" id="nav-lost-board">Lost Board</a>
+                  <a href="#" id="nav-report">Report Found</a>
+                  <a href="#" id="nav-report-lost" class="btn-nav-lost btn">I Lost Something</a>
+                  <a href="#" id="nav-map">Map</a>
+                  <a href="#" id="nav-admin" class="btn-nav btn">Admin</a>
+            </div>
+      </nav>
+
+
+      <!-- ============================================================
+     PAGE: HOME
+============================================================ -->
+      <div class="page active" id="page-home">
+
+            <div class="hero">
+                  <div class="hero-tag">South Brunswick High School</div>
+                  <h1>Lost something?<br>We've got it <em>found.</em></h1>
+                  <p>Browse items turned in to our lost and found, report something you found, or post about something
+                        you lost. Let's reunite belongings with their owners.</p>
+
+                  <div class="hero-actions">
+                        <button class="btn btn-primary" id="btn-browse-hero">Browse Found Items</button>
+                        <button class="btn btn-warning" id="btn-report-lost-hero">I Lost Something</button>
+                  </div>
+                  <div class="hero-actions" style="margin-top:0.75rem">
+                        <button class="btn btn-secondary" id="btn-report-hero">Report a Found Item</button>
+                        <button class="btn btn-secondary" id="btn-lost-board-hero">View Lost Board</button>
+                  </div>
+            </div>
+
+            <div class="stats" id="home-stats">
+                  <div class="stat">
+                        <div class="stat-num" id="stat-total">0</div>
+                        <div class="stat-label">Items found</div>
+                  </div>
+                  <div class="stat">
+                        <div class="stat-num" id="stat-available">0</div>
+                        <div class="stat-label">Awaiting owner</div>
+                  </div>
+                  <div class="stat">
+                        <div class="stat-num" id="stat-returned">0</div>
+                        <div class="stat-label">Successfully returned</div>
+                  </div>
+                  <div class="stat">
+                        <div class="stat-num stat-seeking" id="stat-seeking">0</div>
+                        <div class="stat-label">Still being sought</div>
+                  </div>
+            </div>
+
+            <!-- Recently Found -->
+            <div class="section">
+                  <div class="section-header">
+                        <h2>Recently Found</h2>
+                        <a href="#" id="link-view-all">View all →</a>
+                  </div>
+                  <div class="items-grid" id="home-items-grid">
+                        <div class="empty-state">
+                              <div class="empty-icon">—</div>
+                              <h3>No items yet</h3>
+                              <p>Be the first to report a found item.</p>
+                        </div>
+                  </div>
+            </div>
+
+            <!-- Lost Board CTA Banner -->
+            <div class="lost-cta-banner">
+                  <div class="lost-cta-inner">
+                        <div class="lost-cta-text">
+                              <h3>Missing something?</h3>
+                              <p>Post to the Lost Board so the whole school can help you find it.</p>
+                        </div>
+                        <a href="#" id="link-view-lost" class="btn btn-warning">View Lost Board →</a>
+                  </div>
+            </div>
+
+      </div><!-- end #page-home -->
+
+
+      <!-- ============================================================
+     PAGE: BROWSE (Found Items)
+============================================================ -->
+      <div class="page" id="page-browse">
+
+            <div class="page-header">
+                  <h1>Found Items</h1>
+                  <p>Browse all items currently in our lost and found. Click any item to claim it.</p>
+            </div>
+
+            <div class="search-bar-wrap">
+                  <div class="search-input-wrap">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" id="search-input" placeholder="Search by name, description, or location…">
+                  </div>
+                  <select id="filter-category">
+                        <option value="">All categories</option>
+                        <option>Electronics</option>
+                        <option>Clothing</option>
+                        <option>Books &amp; Stationery</option>
+                        <option>Bags &amp; Accessories</option>
+                        <option>Sports Equipment</option>
+                        <option>Keys &amp; Cards</option>
+                        <option>Other</option>
+                  </select>
+                  <select id="filter-status">
+                        <option value="">All statuses</option>
+                        <option value="available">Available</option>
+                        <option value="claimed">Claim Pending</option>
+                        <option value="returned">Returned</option>
+                  </select>
+            </div>
+
+            <div class="section" style="padding-top:0">
+                  <div class="items-grid" id="browse-grid"></div>
+            </div>
+
+      </div><!-- end #page-browse -->
+
+
+      <!-- ============================================================
+     PAGE: LOST BOARD
+============================================================ -->
+      <div class="page" id="page-lost-board">
+
+            <div class="page-header page-header-lost">
+                  <div class="page-header-lost-inner">
+                        <div>
+                              <h1>Lost Board</h1>
+                              <p>Items that students and staff are actively searching for. Spotted something? Contact
+                                    the owner directly.</p>
+                        </div>
+                        <a href="#" id="nav-report-lost-from-board" class="btn btn-warning"
+                              onclick="showPage('report-lost'); return false;">+ Report My Lost Item</a>
+                  </div>
+            </div>
+
+            <div class="search-bar-wrap">
+                  <div class="search-input-wrap">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" id="lost-search-input" placeholder="Search lost items…">
+                  </div>
+                  <select id="lost-filter-category">
+                        <option value="">All categories</option>
+                        <option>Electronics</option>
+                        <option>Clothing</option>
+                        <option>Books &amp; Stationery</option>
+                        <option>Bags &amp; Accessories</option>
+                        <option>Sports Equipment</option>
+                        <option>Keys &amp; Cards</option>
+                        <option>Other</option>
+                  </select>
+            </div>
+
+            <div class="section" style="padding-top:0">
+                  <div class="items-grid" id="lost-board-grid"></div>
+            </div>
+
+      </div><!-- end #page-lost-board -->
+
+
+      <!-- ============================================================
+     PAGE: REPORT FOUND ITEM
+============================================================ -->
+      <div class="page" id="page-report">
+
+            <div class="page-header">
+                  <h1>Report a Found Item</h1>
+                  <p>Help reunite someone with their belongings by submitting details below.</p>
+            </div>
+
+            <div class="form-wrap">
+                  <form id="report-form">
+
+                        <div class="form-group">
+                              <label>Item Name <span>*</span></label>
+                              <input type="text" id="r-name" placeholder="e.g. Blue water bottle, AirPods case"
+                                    required>
+                        </div>
+
+                        <div class="form-row">
+                              <div class="form-group">
+                                    <label>Category <span>*</span></label>
+                                    <select id="r-category" required>
+                                          <option value="">Select…</option>
+                                          <option>Electronics</option>
+                                          <option>Clothing</option>
+                                          <option>Books &amp; Stationery</option>
+                                          <option>Bags &amp; Accessories</option>
+                                          <option>Sports Equipment</option>
+                                          <option>Keys &amp; Cards</option>
+                                          <option>Other</option>
+                                    </select>
+                              </div>
+                              <div class="form-group">
+                                    <label>Where was it found? <span>*</span></label>
+                                    <input type="text" id="r-location" placeholder="e.g. Room 204, Main gym"
+                                          list="location-suggestions" autocomplete="off" required>
+                                    <datalist id="location-suggestions">
+                                          <option value="Main Gym">
+                                          <option value="Cafeteria">
+                                          <option value="Library">
+                                          <option value="Main Office">
+                                          <option value="Auditorium">
+                                          <option value="Room 101">
+                                          <option value="Room 102">
+                                          <option value="Room 103">
+                                          <option value="Room 201">
+                                          <option value="Room 202">
+                                          <option value="Room 203">
+                                          <option value="Room 204">
+                                          <option value="Science Wing">
+                                          <option value="Art Room">
+                                          <option value="Music Room">
+                                          <option value="Locker Room">
+                                          <option value="Main Entrance">
+                                          <option value="Parking Lot">
+                                          <option value="Athletic Field">
+                                          <option value="Hallway - 1st Floor">
+                                          <option value="Hallway - 2nd Floor">
+                                    </datalist>
+                              </div>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Date Found <span>*</span></label>
+                              <input type="date" id="r-date" required>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Description</label>
+                              <textarea id="r-description"
+                                    placeholder="Any identifying details — color, brand, markings, condition…"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Your Name <span>*</span></label>
+                              <input type="text" id="r-finder" placeholder="Your name" required>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Your Email <span>*</span></label>
+                              <input type="email" id="r-email" placeholder="your@school.edu" required>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Photo (optional)</label>
+                              <div class="upload-area" id="upload-area">
+                                    <input type="file" id="r-photo" accept="image/*">
+                                    <div class="upload-icon">↑</div>
+                                    <p><strong>Click to upload</strong> or drag and drop</p>
+                                    <p>PNG, JPG up to 5MB</p>
+                              </div>
+                              <div class="upload-preview" id="upload-preview"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width:100%">Submit Found Item →</button>
+
+                  </form>
+            </div>
+
+      </div><!-- end #page-report -->
+
+
+      <!-- ============================================================
+     PAGE: REPORT LOST ITEM
+============================================================ -->
+      <div class="page" id="page-report-lost">
+
+            <div class="page-header page-header-lost">
+                  <h1>Report a Lost Item</h1>
+                  <p>Describe what you lost and where you last had it. Your post will appear on the Lost Board after
+                        admin approval.</p>
+            </div>
+
+            <div class="form-wrap">
+                  <div class="lost-form-tip">
+                        <strong>💡 Tip:</strong> The more detail you add, the easier it is for someone who finds it to
+                        contact you. Your email will be visible to others on the Lost Board.
+                  </div>
+
+                  <form id="report-lost-form">
+
+                        <div class="form-group">
+                              <label>Item Name <span class="required-star">*</span></label>
+                              <input type="text" id="rl-name" placeholder="e.g. Black North Face backpack, iPhone 14"
+                                    required>
+                        </div>
+
+                        <div class="form-row">
+                              <div class="form-group">
+                                    <label>Category <span class="required-star">*</span></label>
+                                    <select id="rl-category" required>
+                                          <option value="">Select…</option>
+                                          <option>Electronics</option>
+                                          <option>Clothing</option>
+                                          <option>Books &amp; Stationery</option>
+                                          <option>Bags &amp; Accessories</option>
+                                          <option>Sports Equipment</option>
+                                          <option>Keys &amp; Cards</option>
+                                          <option>Other</option>
+                                    </select>
+                              </div>
+                              <div class="form-group">
+                                    <label>Last seen near (optional)</label>
+                                    <input type="text" id="rl-location" placeholder="e.g. Room 204, near the gym"
+                                          list="lost-location-suggestions" autocomplete="off">
+                                    <datalist id="lost-location-suggestions">
+                                          <option value="Main Gym">
+                                          <option value="Cafeteria">
+                                          <option value="Library">
+                                          <option value="Main Office">
+                                          <option value="Auditorium">
+                                          <option value="Room 101">
+                                          <option value="Room 102">
+                                          <option value="Room 103">
+                                          <option value="Room 201">
+                                          <option value="Room 202">
+                                          <option value="Room 203">
+                                          <option value="Room 204">
+                                          <option value="Science Wing">
+                                          <option value="Art Room">
+                                          <option value="Music Room">
+                                          <option value="Locker Room">
+                                          <option value="Main Entrance">
+                                          <option value="Parking Lot">
+                                          <option value="Athletic Field">
+                                          <option value="Hallway - 1st Floor">
+                                          <option value="Hallway - 2nd Floor">
+                                    </datalist>
+                              </div>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Date Lost <span class="required-star">*</span></label>
+                              <input type="date" id="rl-date" required>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Description</label>
+                              <textarea id="rl-description"
+                                    placeholder="Describe your item in detail — color, brand, any markings, unique features, what was inside if it's a bag…"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Your Name <span class="required-star">*</span></label>
+                              <input type="text" id="rl-owner" placeholder="Your name" required>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Your Email <span class="required-star">*</span></label>
+                              <input type="email" id="rl-email" placeholder="your@school.edu" required>
+                              <p class="field-note">This will be shown publicly so finders can contact you.</p>
+                        </div>
+
+                        <div class="form-group">
+                              <label>Photo of your item (optional)</label>
+                              <div class="upload-area upload-area-lost" id="lost-upload-area">
+                                    <input type="file" id="rl-photo" accept="image/*">
+                                    <div class="upload-icon">↑</div>
+                                    <p><strong>Click to upload</strong> or drag and drop</p>
+                                    <p>PNG, JPG up to 5MB — helps people recognise it!</p>
+                              </div>
+                              <div class="upload-preview" id="lost-upload-preview"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning" style="width:100%">Post to Lost Board →</button>
+
+                  </form>
+            </div>
+
+      </div><!-- end #page-report-lost -->
+
+
+      <!-- ============================================================
+     PAGE: ADMIN
+============================================================ -->
+      <div class="page" id="page-admin">
+
+            <div class="page-header">
+                  <h1>Admin Panel</h1>
+                  <p>Manage found item submissions, approve listings, handle claims, and review lost item reports.</p>
+            </div>
+
+            <div class="admin-wrap">
+
+                  <div id="admin-login-view">
+                        <div class="login-wrap">
+                              <h2>Admin Login</h2>
+                              <p>Enter the admin password to access the panel.</p>
+                              <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" id="admin-password" placeholder="••••••••">
+                                    <p id="admin-pw-error"
+                                          style="color:#c0392b;font-size:0.82rem;margin-top:0.4rem;display:none;">
+                                          Incorrect password. Please try again.</p>
+                              </div>
+                              <button class="btn btn-primary" id="btn-admin-login" style="width:100%">Log In</button>
+                              <p class="text-mid mt-2" style="font-size:0.8rem"><strong></admin123>
+                              </p>
+                        </div>
+                  </div>
+
+                  <div id="admin-panel-view" style="display:none">
+
+                        <div class="admin-tabs">
+                              <button class="admin-tab active" id="tab-items">Found Items</button>
+                              <button class="admin-tab" id="tab-claims">Claim Requests</button>
+                              <button class="admin-tab admin-tab-lost" id="tab-lost">Lost Reports</button>
+                        </div>
+
+                        <!-- Found Items table -->
+                        <div id="admin-items-view">
+                              <table id="admin-items-table">
+                                    <thead>
+                                          <tr>
+                                                <th>Item</th>
+                                                <th>Category</th>
+                                                <th>Location</th>
+                                                <th>Date</th>
+                                                <th>Found By</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                          </tr>
+                                    </thead>
+                                    <tbody id="admin-items-tbody"></tbody>
+                              </table>
+                        </div>
+
+                        <!-- Claims table -->
+                        <div id="admin-claims-view" style="display:none">
+                              <table>
+                                    <thead>
+                                          <tr>
+                                                <th>Claimant</th>
+                                                <th>Item</th>
+                                                <th>Message</th>
+                                                <th>Contact</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                          </tr>
+                                    </thead>
+                                    <tbody id="admin-claims-tbody"></tbody>
+                              </table>
+                        </div>
+
+                        <!-- Lost Items table -->
+                        <div id="admin-lost-view" style="display:none">
+                              <table id="admin-lost-table">
+                                    <thead>
+                                          <tr>
+                                                <th>Item</th>
+                                                <th>Category</th>
+                                                <th>Last Seen</th>
+                                                <th>Date Lost</th>
+                                                <th>Owner</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                          </tr>
+                                    </thead>
+                                    <tbody id="admin-lost-tbody"></tbody>
+                              </table>
+                        </div>
+
+                  </div><!-- end admin-panel-view -->
+
+            </div>
+      </div><!-- end #page-admin -->
+
+
+      <!-- ============================================================
+     PAGE: MAP
+============================================================ -->
+      <div class="page" id="page-map">
+
+            <div class="page-header">
+                  <h1>Campus Map</h1>
+                  <p>See where items were found. Click a pin to view details.</p>
+            </div>
+
+            <div class="map-legend">
+                  <span class="map-legend-item"><span class="map-dot dot-available"></span>Available</span>
+                  <span class="map-legend-item"><span class="map-dot dot-claimed"></span>Claim Pending</span>
+                  <span class="map-legend-item"><span class="map-dot dot-returned"></span>Returned</span>
+            </div>
+
+            <div class="map-wrap">
+                  <div class="map-inner" id="map-inner">
+                        <svg id="map-svg" viewBox="0 0 900 580" xmlns="http://www.w3.org/2000/svg">
+
+                              <rect x="30" y="30" width="840" height="520" rx="14" fill="#f0f4fa" stroke="#c8d6e8"
+                                    stroke-width="2" />
+
+                              <rect x="380" y="470" width="140" height="60" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="450" y="506" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Main Entrance</text>
+
+                              <rect x="30" y="30" width="160" height="90" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="110" y="81" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Main Office</text>
+
+                              <rect x="580" y="30" width="200" height="130" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="680" y="100" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Cafeteria</text>
+
+                              <rect x="580" y="200" width="200" height="180" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="680" y="295" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Main Gym</text>
+
+                              <rect x="580" y="420" width="200" height="90" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="680" y="470" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Locker Room</text>
+
+                              <rect x="30" y="350" width="200" height="160" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="130" y="436" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Auditorium</text>
+
+                              <rect x="30" y="160" width="200" height="150" rx="6" fill="#dce8f8" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="130" y="240" text-anchor="middle" font-size="11" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Library</text>
+
+                              <rect x="270" y="30" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="320" y="70" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 101</text>
+
+                              <rect x="380" y="30" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="430" y="70" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 102</text>
+
+                              <rect x="490" y="30" width="80" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="530" y="70" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 103</text>
+
+                              <rect x="270" y="160" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="320" y="200" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 201</text>
+
+                              <rect x="380" y="160" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="430" y="200" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 202</text>
+
+                              <rect x="490" y="160" width="80" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="530" y="200" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 203</text>
+
+                              <rect x="270" y="270" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="320" y="310" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Room 204</text>
+
+                              <rect x="380" y="270" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="430" y="307" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Science Wing</text>
+
+                              <rect x="490" y="270" width="80" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="530" y="307" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Art Room</text>
+
+                              <rect x="270" y="380" width="100" height="70" rx="5" fill="#e8f0fb" stroke="#b0c8e8"
+                                    stroke-width="1.5" />
+                              <text x="320" y="418" text-anchor="middle" font-size="10" fill="#3a5a80"
+                                    font-family="DM Sans, sans-serif">Music Room</text>
+
+                              <text x="450" y="145" text-anchor="middle" font-size="10" fill="#8aa6c0"
+                                    font-family="DM Sans, sans-serif" font-style="italic">— Hallway 1st Floor —</text>
+                              <text x="450" y="252" text-anchor="middle" font-size="10" fill="#8aa6c0"
+                                    font-family="DM Sans, sans-serif" font-style="italic">— Hallway 2nd Floor —</text>
+
+                              <rect x="30" y="510" width="320" height="38" rx="6" fill="#d9ecd0" stroke="#a8c898"
+                                    stroke-width="1.5" />
+                              <text x="190" y="534" text-anchor="middle" font-size="11" fill="#3a6e30"
+                                    font-family="DM Sans, sans-serif">Athletic Field</text>
+
+                              <rect x="760" y="510" width="110" height="38" rx="6" fill="#e8e8e8" stroke="#c0c0c0"
+                                    stroke-width="1.5" />
+                              <text x="815" y="534" text-anchor="middle" font-size="11" fill="#555"
+                                    font-family="DM Sans, sans-serif">Parking Lot</text>
+
+                              <g id="map-pins"></g>
+
+                        </svg>
+                        <div class="map-tooltip" id="map-tooltip"></div>
+                  </div>
+            </div>
+
+            <div id="map-unlisted" style="display:none">
+                  <div class="section-header" style="margin-top:2rem">
+                        <h2>Other Locations</h2>
+                  </div>
+                  <div class="items-grid" id="map-unlisted-grid"></div>
+            </div>
+
+      </div><!-- end #page-map -->
+
+
+      <!-- ITEM DETAIL MODAL (found + lost items share this overlay) -->
+      <div class="modal-overlay" id="item-modal">
+            <div class="modal">
+                  <button class="modal-close" id="btn-modal-close">×</button>
+                  <div id="modal-content"></div>
+            </div>
+      </div>
+
+      <!-- CLAIM MODAL -->
+      <div class="modal-overlay" id="claim-modal">
+            <div class="modal">
+                  <button class="modal-close" id="btn-claim-modal-close">×</button>
+                  <h2>Claim This Item</h2>
+                  <p class="text-mid" style="margin-bottom:1.25rem;font-size:0.9rem">
+                        Fill in your details and describe why this item is yours. An admin will review your request.
+                  </p>
+                  <input type="hidden" id="claim-item-id">
+                  <div class="form-group">
+                        <label>Your Name <span style="color:var(--accent)">*</span></label>
+                        <input type="text" id="claim-name" placeholder="Full name" required>
+                  </div>
+                  <div class="form-group">
+                        <label>Email <span style="color:var(--accent)">*</span></label>
+                        <input type="email" id="claim-email" placeholder="your@school.edu" required>
+                  </div>
+                  <div class="form-group">
+                        <label>Student ID (optional)</label>
+                        <input type="text" id="claim-sid" placeholder="e.g. 2024-001">
+                  </div>
+                  <div class="form-group">
+                        <label>How do you know this is yours? <span style="color:var(--accent)">*</span></label>
+                        <textarea id="claim-message"
+                              placeholder="Describe identifying features, where you lost it, etc." required></textarea>
+                  </div>
+                  <button class="btn btn-primary" id="btn-submit-claim" style="width:100%">Submit Claim Request
+                        →</button>
+            </div>
+      </div>
+
+      <!-- TOAST -->
+      <div class="toast" id="toast"></div>
+
+      <script type="module" src="app.js"></script>
+
+</body>
+
+</html>
