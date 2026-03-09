@@ -120,6 +120,191 @@ function isValidEmail(email) {
 }
 
 
+// ── EMAIL VERIFICATION SYSTEM ────────────────────────────────
+// Stores emails verified this session so users don't re-verify.
+// In production, replace sendVerificationCode() with a real
+// email API (e.g. EmailJS, SendGrid, your own backend).
+
+const verifiedEmails = new Set();   // session cache
+let _otpCode = '';                   // current active code
+let _otpEmail = '';                  // email being verified
+let _otpCallback = null;             // function to call on success
+let _resendTimer = null;
+
+/**
+ * Call this instead of directly submitting.
+ * If the email is already verified this session, callback runs immediately.
+ * Otherwise, shows the OTP modal and calls callback after verification.
+ *
+ * @param {string} email
+ * @param {function} callback  — called with no args once verified
+ */
+function requireEmailVerification(email, callback) {
+      if (verifiedEmails.has(email.toLowerCase())) {
+            callback();
+            return;
+      }
+      _otpEmail = email.toLowerCase();
+      _otpCallback = callback;
+      sendVerificationCode(email);
+      openVerifyModal(email);
+}
+
+/** Generates a 6-digit code and "sends" it (dev hint shown in modal). */
+function sendVerificationCode(email) {
+      _otpCode = String(Math.floor(100000 + Math.random() * 900000));
+
+      // ── In production: call your email API here ──────────────
+      // Example with EmailJS:
+      // emailjs.send('service_id', 'template_id', {
+      //   to_email: email,
+      //   otp_code: _otpCode,
+      // });
+      // ────────────────────────────────────────────────────────
+
+      console.info(`[FoundIt] Verification code for ${email}: ${_otpCode}`);
+
+      // Show code in-UI for development / demo purposes.
+      // Remove the dev hint block in production.
+      const hint = document.getElementById('verify-dev-hint');
+      const codeEl = document.getElementById('verify-dev-code');
+      if (hint && codeEl) {
+            codeEl.textContent = _otpCode;
+            hint.style.display = 'block';
+      }
+}
+
+function openVerifyModal(email) {
+      document.getElementById('verify-email-display').textContent = email;
+      document.getElementById('verify-error').style.display = 'none';
+
+      // Clear boxes
+      document.querySelectorAll('.otp-box').forEach(b => {
+            b.value = '';
+            b.classList.remove('otp-filled', 'otp-error');
+      });
+
+      document.getElementById('verify-modal').classList.add('open');
+
+      // Focus first box
+      setTimeout(() => {
+            const first = document.querySelector('.otp-box');
+            if (first) first.focus();
+      }, 80);
+
+      startResendTimer();
+}
+
+function closeVerifyModal() {
+      document.getElementById('verify-modal').classList.remove('open');
+      clearResendTimer();
+}
+
+function startResendTimer(seconds = 60) {
+      clearResendTimer();
+      const resendLink = document.getElementById('btn-resend-code');
+      const timerEl = document.getElementById('resend-timer');
+      let remaining = seconds;
+
+      resendLink.style.pointerEvents = 'none';
+      resendLink.style.opacity = '0.4';
+      timerEl.textContent = ` (${remaining}s)`;
+
+      _resendTimer = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                  clearResendTimer();
+                  resendLink.style.pointerEvents = '';
+                  resendLink.style.opacity = '';
+                  timerEl.textContent = '';
+            } else {
+                  timerEl.textContent = ` (${remaining}s)`;
+            }
+      }, 1000);
+}
+
+function clearResendTimer() {
+      if (_resendTimer) { clearInterval(_resendTimer); _resendTimer = null; }
+}
+
+function getOtpValue() {
+      return [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
+}
+
+function verifyOtp() {
+      const entered = getOtpValue();
+      if (entered.length < 6) {
+            showToast('Please enter all 6 digits.', 'error');
+            return;
+      }
+      if (entered !== _otpCode) {
+            document.getElementById('verify-error').style.display = 'block';
+            document.querySelectorAll('.otp-box').forEach(b => {
+                  b.classList.add('otp-error');
+                  b.classList.remove('otp-filled');
+            });
+            setTimeout(() => {
+                  document.querySelectorAll('.otp-box').forEach(b => b.classList.remove('otp-error'));
+            }, 600);
+            return;
+      }
+
+      // ✅ Verified
+      verifiedEmails.add(_otpEmail);
+      closeVerifyModal();
+      showToast('Email verified!', 'success');
+      if (_otpCallback) { _otpCallback(); _otpCallback = null; }
+}
+
+function bindOtpInputs() {
+      const boxes = [...document.querySelectorAll('.otp-box')];
+
+      boxes.forEach((box, i) => {
+            box.addEventListener('input', () => {
+                  // Keep only last digit typed (handles paste into single box)
+                  box.value = box.value.replace(/\D/g, '').slice(-1);
+                  box.classList.toggle('otp-filled', box.value !== '');
+                  document.getElementById('verify-error').style.display = 'none';
+                  boxes.forEach(b => b.classList.remove('otp-error'));
+
+                  if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+
+                  // Auto-submit when last box filled
+                  if (i === boxes.length - 1 && getOtpValue().length === 6) {
+                        setTimeout(() => verifyOtp(), 120);
+                  }
+            });
+
+            box.addEventListener('keydown', e => {
+                  if (e.key === 'Backspace' && !box.value && i > 0) {
+                        boxes[i - 1].value = '';
+                        boxes[i - 1].classList.remove('otp-filled');
+                        boxes[i - 1].focus();
+                  }
+                  if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
+                  if (e.key === 'ArrowRight' && i < boxes.length - 1) boxes[i + 1].focus();
+            });
+
+            // Handle paste (e.g. paste full "123456")
+            box.addEventListener('paste', e => {
+                  e.preventDefault();
+                  const text = (e.clipboardData || window.clipboardData)
+                        .getData('text').replace(/\D/g, '').slice(0, 6);
+                  if (!text) return;
+                  text.split('').forEach((ch, j) => {
+                        if (boxes[j]) {
+                              boxes[j].value = ch;
+                              boxes[j].classList.add('otp-filled');
+                        }
+                  });
+                  const next = boxes[Math.min(text.length, boxes.length - 1)];
+                  if (next) next.focus();
+                  if (text.length === 6) setTimeout(() => verifyOtp(), 120);
+            });
+      });
+}
+
+
 // ── NAVIGATION ───────────────────────────────────────────────
 
 function showPage(page) {
@@ -419,25 +604,27 @@ async function submitClaim() {
             showToast('Please describe why this item is yours (at least 10 characters).', 'error'); return;
       }
 
-      try {
-            await addClaim({
-                  itemId,
-                  name,
-                  email,
-                  sid: document.getElementById('claim-sid').value.trim(),
-                  message,
-                  date: new Date().toLocaleDateString(),
-                  status: 'pending',
-            });
-            await updateItem(itemId, { status: 'claimed' });
+      requireEmailVerification(email, async () => {
+            try {
+                  await addClaim({
+                        itemId,
+                        name,
+                        email,
+                        sid: document.getElementById('claim-sid').value.trim(),
+                        message,
+                        date: new Date().toLocaleDateString(),
+                        status: 'pending',
+                  });
+                  await updateItem(itemId, { status: 'claimed' });
 
-            closeClaimModal();
-            showToast('Claim submitted! An admin will be in touch.', 'success');
-            renderBrowse();
-      } catch (err) {
-            console.error('submitClaim:', err);
-            showToast('Something went wrong. Please try again.', 'error');
-      }
+                  closeClaimModal();
+                  showToast('Claim submitted! An admin will be in touch.', 'success');
+                  renderBrowse();
+            } catch (err) {
+                  console.error('submitClaim:', err);
+                  showToast('Something went wrong. Please try again.', 'error');
+            }
+      });
 };
 
 
@@ -488,25 +675,27 @@ async function submitReport(e) {
             showToast('Please enter a more descriptive item name.', 'error'); return;
       }
 
-      try {
-            await addItem({
-                  name, category, location, date,
-                  description: document.getElementById('r-description').value.trim(),
-                  finder, email,
-                  photo: uploadedPhoto,
-                  status: 'available',
-                  approved: false,
-            });
+      requireEmailVerification(email, async () => {
+            try {
+                  await addItem({
+                        name, category, location, date,
+                        description: document.getElementById('r-description').value.trim(),
+                        finder, email,
+                        photo: uploadedPhoto,
+                        status: 'available',
+                        approved: false,
+                  });
 
-            uploadedPhoto = null;
-            document.getElementById('report-form').reset();
-            document.getElementById('upload-preview').innerHTML = '';
-            document.getElementById('r-date').valueAsDate = new Date();
-            showToast('Item submitted! It will appear after admin approval.', 'success');
-      } catch (err) {
-            console.error('submitReport:', err);
-            showToast('Something went wrong. Please try again.', 'error');
-      }
+                  uploadedPhoto = null;
+                  document.getElementById('report-form').reset();
+                  document.getElementById('upload-preview').innerHTML = '';
+                  document.getElementById('r-date').valueAsDate = new Date();
+                  showToast('Item submitted! It will appear after admin approval.', 'success');
+            } catch (err) {
+                  console.error('submitReport:', err);
+                  showToast('Something went wrong. Please try again.', 'error');
+            }
+      });
 };
 
 
@@ -557,25 +746,27 @@ async function submitLostReport(e) {
             showToast('Please enter a more descriptive item name.', 'error'); return;
       }
 
-      try {
-            await addLostItem({
-                  name, category, lastLocation, dateLost,
-                  description: document.getElementById('rl-description').value.trim(),
-                  ownerName, email,
-                  photo: uploadedLostPhoto,
-                  status: 'seeking',
-                  approved: false,
-            });
+      requireEmailVerification(email, async () => {
+            try {
+                  await addLostItem({
+                        name, category, lastLocation, dateLost,
+                        description: document.getElementById('rl-description').value.trim(),
+                        ownerName, email,
+                        photo: uploadedLostPhoto,
+                        status: 'seeking',
+                        approved: false,
+                  });
 
-            uploadedLostPhoto = null;
-            document.getElementById('report-lost-form').reset();
-            document.getElementById('lost-upload-preview').innerHTML = '';
-            document.getElementById('rl-date').valueAsDate = new Date();
-            showToast('Lost item reported! It will appear after admin approval.', 'success');
-      } catch (err) {
-            console.error('submitLostReport:', err);
-            showToast('Something went wrong. Please try again.', 'error');
-      }
+                  uploadedLostPhoto = null;
+                  document.getElementById('report-lost-form').reset();
+                  document.getElementById('lost-upload-preview').innerHTML = '';
+                  document.getElementById('rl-date').valueAsDate = new Date();
+                  showToast('Lost item reported! It will appear after admin approval.', 'success');
+            } catch (err) {
+                  console.error('submitLostReport:', err);
+                  showToast('Something went wrong. Please try again.', 'error');
+            }
+      });
 };
 
 
@@ -1053,6 +1244,31 @@ function bindEvents() {
       // ── Claim submit ──
       document.getElementById('btn-submit-claim')
             ?.addEventListener('click', () => submitClaim());
+
+      // ── Email verification modal ──
+      bindOtpInputs();
+      document.getElementById('btn-verify-modal-close')
+            ?.addEventListener('click', () => closeVerifyModal());
+      document.getElementById('verify-modal')
+            ?.addEventListener('click', e => {
+                  if (e.target === document.getElementById('verify-modal')) closeVerifyModal();
+            });
+      document.getElementById('btn-verify-submit')
+            ?.addEventListener('click', () => verifyOtp());
+      document.getElementById('btn-resend-code')
+            ?.addEventListener('click', e => {
+                  e.preventDefault();
+                  sendVerificationCode(_otpEmail);
+                  // Clear boxes for new code
+                  document.querySelectorAll('.otp-box').forEach(b => {
+                        b.value = '';
+                        b.classList.remove('otp-filled', 'otp-error');
+                  });
+                  document.getElementById('verify-error').style.display = 'none';
+                  document.querySelector('.otp-box')?.focus();
+                  showToast('A new code has been sent.', 'success');
+                  startResendTimer();
+            });
 
       // ── Admin login ──
       document.getElementById('btn-admin-login')
