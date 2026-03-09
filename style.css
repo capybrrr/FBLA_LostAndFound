@@ -1149,7 +1149,68 @@ tr:hover td {
 }
 
 
-/* ── 22. RESPONSIVE ───────────────────────────────────────── */
+/* ── 23. EMAIL VERIFICATION MODAL ─────────────────────────── */
+.verify-icon {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 0.75rem;
+}
+
+.otp-inputs {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+}
+
+.otp-box {
+      width: 46px;
+      height: 54px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      caret-color: transparent;
+}
+
+.otp-box:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12);
+}
+
+.otp-box.otp-filled {
+      border-color: var(--accent);
+      background: var(--accent-light);
+}
+
+.otp-box.otp-error {
+      border-color: #c0392b;
+      background: #fdf0ee;
+      animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+
+      0%,
+      100% {
+            transform: translateX(0);
+      }
+
+      25% {
+            transform: translateX(-5px);
+      }
+
+      75% {
+            transform: translateX(5px);
+      }
+}
+
+
 @media (max-width: 600px) {
       .form-row {
             grid-template-columns: 1fr;
