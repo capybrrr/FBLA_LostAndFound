@@ -647,13 +647,98 @@ function handlePhotoUpload(input) {
       }
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
             uploadedPhoto = e.target.result;
             document.getElementById('upload-preview').innerHTML =
                   `<img src="${uploadedPhoto}" alt="preview">`;
+            await aiAutoFillFromPhoto(uploadedPhoto);
       };
       reader.readAsDataURL(file);
 };
+
+// ── AI AUTO-FILL FROM PHOTO ───────────────────────────────────
+
+async function aiAutoFillFromPhoto(base64DataUrl) {
+      const btn = document.getElementById('ai-autofill-status');
+      if (btn) {
+            btn.textContent = '✨ AI is analyzing your photo…';
+            btn.style.display = 'block';
+      }
+
+      try {
+            // Strip the data URL prefix to get raw base64
+            const base64 = base64DataUrl.split(',')[1];
+            const mediaType = base64DataUrl.split(';')[0].split(':')[1];
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                              role: 'user',
+                              content: [
+                                    {
+                                          type: 'image',
+                                          source: { type: 'base64', media_type: mediaType, data: base64 }
+                                    },
+                                    {
+                                          type: 'text',
+                                          text: `You are helping a school lost and found website. Look at this image and identify the lost item.
+
+Respond ONLY with a valid JSON object (no markdown, no backticks) with these exact fields:
+{
+  "name": "short descriptive item name (e.g. 'Blue Nike Water Bottle', 'Black Adidas Backpack')",
+  "category": "one of: Electronics, Clothing, Books & Stationery, Bags & Accessories, Sports Equipment, Keys & Cards, Other",
+  "description": "2-3 sentence description including color, brand if visible, condition, and any distinguishing features"
+}`
+                                    }
+                              ]
+                        }]
+                  })
+            });
+
+            const data = await response.json();
+            const text = data.content?.find(b => b.type === 'text')?.text || '';
+
+            let parsed;
+            try {
+                  parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+            } catch {
+                  throw new Error('Could not parse AI response');
+            }
+
+            // Fill in the form fields
+            if (parsed.name) {
+                  const nameEl = document.getElementById('r-name');
+                  if (nameEl) nameEl.value = parsed.name;
+            }
+            if (parsed.category) {
+                  const catEl = document.getElementById('r-category');
+                  if (catEl) {
+                        // Find matching option
+                        const opt = [...catEl.options].find(o => o.value === parsed.category);
+                        if (opt) catEl.value = parsed.category;
+                  }
+            }
+            if (parsed.description) {
+                  const descEl = document.getElementById('r-description');
+                  if (descEl) descEl.value = parsed.description;
+            }
+
+            if (btn) {
+                  btn.textContent = '✅ AI filled in the details — review and adjust if needed!';
+                  btn.className = 'ai-status-success';
+            }
+      } catch (err) {
+            console.error('AI auto-fill error:', err);
+            if (btn) {
+                  btn.textContent = '⚠️ AI could not analyze photo. Please fill in manually.';
+                  btn.className = 'ai-status-error';
+            }
+      }
+}
 
 async function submitReport(e) {
       e.preventDefault();
@@ -1290,3 +1375,133 @@ function bindEvents() {
 }
 
 bindEvents();
+
+// ── AI CHATBOT ───────────────────────────────────────────────
+
+let chatHistory = [];
+let chatOpen = false;
+
+function toggleChat() {
+      chatOpen = !chatOpen;
+      const panel = document.getElementById('chat-panel');
+      const bubble = document.getElementById('chat-bubble');
+      panel.classList.toggle('open', chatOpen);
+      bubble.classList.toggle('active', chatOpen);
+      if (chatOpen && chatHistory.length === 0) {
+            addChatMessage('bot', "Hi! 👋 I can help you search for lost items. Try asking me things like:\n• \"Show me all water bottles\"\n• \"Any blue backpacks?\"\n• \"Electronics found this week\"");
+      }
+      if (chatOpen) {
+            setTimeout(() => document.getElementById('chat-input')?.focus(), 100);
+      }
+}
+
+function addChatMessage(role, text) {
+      const msgs = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `chat-msg chat-msg-${role}`;
+
+      // Support markdown-style bold and line breaks
+      const formatted = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+      div.innerHTML = formatted;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addChatTyping() {
+      const msgs = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'chat-msg chat-msg-bot chat-typing';
+      div.id = 'chat-typing-indicator';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeChatTyping() {
+      document.getElementById('chat-typing-indicator')?.remove();
+}
+
+async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      input.value = '';
+      addChatMessage('user', userText);
+      addChatTyping();
+
+      // Fetch current items from Firebase
+      let items = [];
+      try {
+            items = (await getItems()).filter(i => i.approved);
+      } catch (e) {
+            removeChatTyping();
+            addChatMessage('bot', 'Sorry, I couldn\'t load the items right now. Please try again.');
+            return;
+      }
+
+      // Summarize items for the AI (keep payload small)
+      const itemSummary = items.map(i => ({
+            id: i.id,
+            name: i.name,
+            category: i.category,
+            location: i.location,
+            date: i.date,
+            status: i.status,
+            description: i.description || ''
+      }));
+
+      chatHistory.push({ role: 'user', content: userText });
+
+      try {
+            const systemPrompt = `You are a helpful assistant for a high school lost and found website called FindIt at South Brunswick High School.
+
+You have access to the current list of found items in the database (provided as JSON). Help users find items by answering their questions naturally.
+
+When listing items, format each one as:
+**[Item Name]** — [Location], found [Date] ([Status])
+
+If no items match, say so and suggest they broaden their search.
+Keep responses concise. If the user asks something unrelated to lost items, gently redirect them.
+
+Current found items database:
+${JSON.stringify(itemSummary, null, 2)}`;
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        system: systemPrompt,
+                        messages: chatHistory
+                  })
+            });
+
+            const data = await response.json();
+            const reply = data.content?.find(b => b.type === 'text')?.text || 'Sorry, I didn\'t understand that.';
+
+            chatHistory.push({ role: 'assistant', content: reply });
+            // Keep history short to avoid token bloat
+            if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+            removeChatTyping();
+            addChatMessage('bot', reply);
+      } catch (err) {
+            console.error('Chat error:', err);
+            removeChatTyping();
+            addChatMessage('bot', 'Something went wrong. Please try again!');
+      }
+}
+
+// Bind chat events after DOM is ready
+window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('chat-bubble')?.addEventListener('click', toggleChat);
+      document.getElementById('chat-send')?.addEventListener('click', sendChatMessage);
+      document.getElementById('chat-input')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+      });
+      document.getElementById('chat-close')?.addEventListener('click', toggleChat);
+});
