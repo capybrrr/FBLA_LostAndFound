@@ -301,6 +301,7 @@
                                     <p>PNG, JPG up to 5MB</p>
                               </div>
                               <div class="upload-preview" id="upload-preview"></div>
+                              <div id="ai-autofill-status" class="ai-status" style="display:none"></div>
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="width:100%">Submit Found Item →</button>
@@ -735,6 +736,31 @@
 
       <!-- TOAST -->
       <div class="toast" id="toast"></div>
+
+      <!-- AI CHATBOT -->
+      <div id="chat-panel" class="chat-panel">
+            <div class="chat-header">
+                  <div class="chat-header-info">
+                        <div class="chat-avatar"></div>
+                        <div>
+                              <div class="chat-title">FindIt Assistant</div>
+                              <div class="chat-subtitle">AI-powered item search</div>
+                        </div>
+                  </div>
+                  <button class="chat-close-btn" id="chat-close">×</button>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-wrap">
+                  <input type="text" id="chat-input" class="chat-input"
+                        placeholder="Ask me anything… e.g. show me water bottles">
+                  <button id="chat-send" class="chat-send-btn">↑</button>
+            </div>
+      </div>
+
+      <button id="chat-bubble" class="chat-bubble" aria-label="Open AI assistant">
+            <span class="chat-bubble-icon"></span>
+            <span class="chat-bubble-label">AI Search</span>
+      </button>
 
       <script type="module" src="app.js"></script>
 
