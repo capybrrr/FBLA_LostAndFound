@@ -9,7 +9,7 @@
 
 // ── API KEYS & CONFIG ────────────────────────────────────────
 // Google Gemini API (browser-safe — supports CORS)
-const GEMINI_API_KEY = 'AIzaSyDMqFublyK3gqBl9Csk32Y3J5mPpUmHwSE';
+const GEMINI_API_KEY = 'AIzaSyAUl0a6pI648W3mAvRiTufoeXMNVPzgj8g';
 const GEMINI_MODEL   = 'gemini-2.0-flash';
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
