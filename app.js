@@ -10,7 +10,7 @@
 // ── API KEYS & CONFIG ────────────────────────────────────────
 // Google Gemini API (browser-safe — supports CORS)
 const GEMINI_API_KEY = 'AIzaSyAUl0a6pI648W3mAvRiTufoeXMNVPzgj8g';
-const GEMINI_MODEL   = 'gemini-2.0-flash';
+const GEMINI_MODEL   = 'gemini-1.5-flash';
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 
@@ -1222,14 +1222,13 @@ async function sendChatMessage() {
       addChatMessage('user', userText);
       addChatTyping();
 
-      // Fetch current items from Firebase
+      // Fetch current items from Firebase (non-fatal — AI still works if this fails)
       let items = [];
       try {
             items = (await getItems()).filter(i => i.approved);
       } catch (e) {
-            removeChatTyping();
-            addChatMessage('bot', 'Sorry, I couldn\'t load the items right now. Please try again.');
-            return;
+            console.warn('[FoundIt] Could not load items for AI context:', e.message);
+            // Continue with empty items — AI can still answer general questions
       }
 
       // Summarize items for the AI (keep payload small)
@@ -1301,9 +1300,9 @@ ${JSON.stringify(itemSummary, null, 2)}`;
             removeChatTyping();
             addChatMessage('bot', reply);
       } catch (err) {
-            console.error('Chat error:', err);
+            console.error('[FoundIt] Gemini chat error:', err.message, err);
             removeChatTyping();
-            addChatMessage('bot', 'Something went wrong. Please try again!');
+            addChatMessage('bot', `Something went wrong: ${err.message}. Check the browser console (F12) for details.`);
       }
 }
 
