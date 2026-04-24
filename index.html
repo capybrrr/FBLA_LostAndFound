@@ -697,43 +697,6 @@
             </div>
       </div>
 
-      <!-- EMAIL VERIFICATION MODAL -->
-      <div class="modal-overlay" id="verify-modal">
-            <div class="modal" style="max-width:420px">
-                  <button class="modal-close" id="btn-verify-modal-close">×</button>
-                  <div class="verify-icon">✉️</div>
-                  <h2>Verify your email</h2>
-                  <p class="text-mid" style="font-size:0.9rem;margin:0.5rem 0 1.5rem">
-                        We sent a 6-digit code to <strong id="verify-email-display"></strong>.
-                        Enter it below to continue.
-                  </p>
-                  <div class="otp-inputs" id="otp-inputs">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-                  </div>
-                  <p id="verify-error"
-                        style="color:#c0392b;font-size:0.83rem;margin-top:0.75rem;display:none;text-align:center">
-                        Incorrect code. Please try again.
-                  </p>
-                  <button class="btn btn-primary" id="btn-verify-submit" style="width:100%;margin-top:1.25rem">
-                        Verify & Submit →
-                  </button>
-                  <p style="text-align:center;margin-top:1rem;font-size:0.82rem;color:var(--mid)">
-                        Didn't get it?
-                        <a href="#" id="btn-resend-code" style="color:var(--accent)">Resend code</a>
-                        <span id="resend-timer" style="color:var(--mid)"></span>
-                  </p>
-                  <div id="verify-dev-hint"
-                        style="margin-top:1rem;padding:0.65rem 0.9rem;background:var(--accent-light);border-radius:8px;font-size:0.8rem;color:var(--accent);text-align:center;display:none">
-                        <strong>Dev mode:</strong> Your code is <strong id="verify-dev-code"></strong>
-                  </div>
-            </div>
-      </div>
-
       <!-- TOAST -->
       <div class="toast" id="toast"></div>
 
@@ -741,7 +704,7 @@
       <div id="chat-panel" class="chat-panel">
             <div class="chat-header">
                   <div class="chat-header-info">
-                        <div class="chat-avatar"></div>
+                        <div class="chat-avatar">✨</div>
                         <div>
                               <div class="chat-title">FindIt Assistant</div>
                               <div class="chat-subtitle">AI-powered item search</div>
