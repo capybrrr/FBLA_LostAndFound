@@ -7,6 +7,12 @@
 // "lostItems" → lost item reports
 // ============================================================
 
+// ── API KEYS & CONFIG ────────────────────────────────────────
+// Google Gemini API (browser-safe — supports CORS)
+const GEMINI_API_KEY = 'AIzaSyDMqFublyK3gqBl9Csk32Y3J5mPpUmHwSE';
+const GEMINI_MODEL   = 'gemini-2.0-flash';
+const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
 
 // ── FIREBASE SETUP ───────────────────────────────────────────
 
@@ -117,191 +123,6 @@ function escapeHTML(str) {
 
 function isValidEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-
-// ── EMAIL VERIFICATION SYSTEM ────────────────────────────────
-// Stores emails verified this session so users don't re-verify.
-// In production, replace sendVerificationCode() with a real
-// email API (e.g. EmailJS, SendGrid, your own backend).
-
-const verifiedEmails = new Set();   // session cache
-let _otpCode = '';                   // current active code
-let _otpEmail = '';                  // email being verified
-let _otpCallback = null;             // function to call on success
-let _resendTimer = null;
-
-/**
- * Call this instead of directly submitting.
- * If the email is already verified this session, callback runs immediately.
- * Otherwise, shows the OTP modal and calls callback after verification.
- *
- * @param {string} email
- * @param {function} callback  — called with no args once verified
- */
-function requireEmailVerification(email, callback) {
-      if (verifiedEmails.has(email.toLowerCase())) {
-            callback();
-            return;
-      }
-      _otpEmail = email.toLowerCase();
-      _otpCallback = callback;
-      sendVerificationCode(email);
-      openVerifyModal(email);
-}
-
-/** Generates a 6-digit code and "sends" it (dev hint shown in modal). */
-function sendVerificationCode(email) {
-      _otpCode = String(Math.floor(100000 + Math.random() * 900000));
-
-      // ── In production: call your email API here ──────────────
-      // Example with EmailJS:
-      // emailjs.send('service_id', 'template_id', {
-      //   to_email: email,
-      //   otp_code: _otpCode,
-      // });
-      // ────────────────────────────────────────────────────────
-
-      console.info(`[FoundIt] Verification code for ${email}: ${_otpCode}`);
-
-      // Show code in-UI for development / demo purposes.
-      // Remove the dev hint block in production.
-      const hint = document.getElementById('verify-dev-hint');
-      const codeEl = document.getElementById('verify-dev-code');
-      if (hint && codeEl) {
-            codeEl.textContent = _otpCode;
-            hint.style.display = 'block';
-      }
-}
-
-function openVerifyModal(email) {
-      document.getElementById('verify-email-display').textContent = email;
-      document.getElementById('verify-error').style.display = 'none';
-
-      // Clear boxes
-      document.querySelectorAll('.otp-box').forEach(b => {
-            b.value = '';
-            b.classList.remove('otp-filled', 'otp-error');
-      });
-
-      document.getElementById('verify-modal').classList.add('open');
-
-      // Focus first box
-      setTimeout(() => {
-            const first = document.querySelector('.otp-box');
-            if (first) first.focus();
-      }, 80);
-
-      startResendTimer();
-}
-
-function closeVerifyModal() {
-      document.getElementById('verify-modal').classList.remove('open');
-      clearResendTimer();
-}
-
-function startResendTimer(seconds = 60) {
-      clearResendTimer();
-      const resendLink = document.getElementById('btn-resend-code');
-      const timerEl = document.getElementById('resend-timer');
-      let remaining = seconds;
-
-      resendLink.style.pointerEvents = 'none';
-      resendLink.style.opacity = '0.4';
-      timerEl.textContent = ` (${remaining}s)`;
-
-      _resendTimer = setInterval(() => {
-            remaining--;
-            if (remaining <= 0) {
-                  clearResendTimer();
-                  resendLink.style.pointerEvents = '';
-                  resendLink.style.opacity = '';
-                  timerEl.textContent = '';
-            } else {
-                  timerEl.textContent = ` (${remaining}s)`;
-            }
-      }, 1000);
-}
-
-function clearResendTimer() {
-      if (_resendTimer) { clearInterval(_resendTimer); _resendTimer = null; }
-}
-
-function getOtpValue() {
-      return [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
-}
-
-function verifyOtp() {
-      const entered = getOtpValue();
-      if (entered.length < 6) {
-            showToast('Please enter all 6 digits.', 'error');
-            return;
-      }
-      if (entered !== _otpCode) {
-            document.getElementById('verify-error').style.display = 'block';
-            document.querySelectorAll('.otp-box').forEach(b => {
-                  b.classList.add('otp-error');
-                  b.classList.remove('otp-filled');
-            });
-            setTimeout(() => {
-                  document.querySelectorAll('.otp-box').forEach(b => b.classList.remove('otp-error'));
-            }, 600);
-            return;
-      }
-
-      // ✅ Verified
-      verifiedEmails.add(_otpEmail);
-      closeVerifyModal();
-      showToast('Email verified!', 'success');
-      if (_otpCallback) { _otpCallback(); _otpCallback = null; }
-}
-
-function bindOtpInputs() {
-      const boxes = [...document.querySelectorAll('.otp-box')];
-
-      boxes.forEach((box, i) => {
-            box.addEventListener('input', () => {
-                  // Keep only last digit typed (handles paste into single box)
-                  box.value = box.value.replace(/\D/g, '').slice(-1);
-                  box.classList.toggle('otp-filled', box.value !== '');
-                  document.getElementById('verify-error').style.display = 'none';
-                  boxes.forEach(b => b.classList.remove('otp-error'));
-
-                  if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
-
-                  // Auto-submit when last box filled
-                  if (i === boxes.length - 1 && getOtpValue().length === 6) {
-                        setTimeout(() => verifyOtp(), 120);
-                  }
-            });
-
-            box.addEventListener('keydown', e => {
-                  if (e.key === 'Backspace' && !box.value && i > 0) {
-                        boxes[i - 1].value = '';
-                        boxes[i - 1].classList.remove('otp-filled');
-                        boxes[i - 1].focus();
-                  }
-                  if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
-                  if (e.key === 'ArrowRight' && i < boxes.length - 1) boxes[i + 1].focus();
-            });
-
-            // Handle paste (e.g. paste full "123456")
-            box.addEventListener('paste', e => {
-                  e.preventDefault();
-                  const text = (e.clipboardData || window.clipboardData)
-                        .getData('text').replace(/\D/g, '').slice(0, 6);
-                  if (!text) return;
-                  text.split('').forEach((ch, j) => {
-                        if (boxes[j]) {
-                              boxes[j].value = ch;
-                              boxes[j].classList.add('otp-filled');
-                        }
-                  });
-                  const next = boxes[Math.min(text.length, boxes.length - 1)];
-                  if (next) next.focus();
-                  if (text.length === 6) setTimeout(() => verifyOtp(), 120);
-            });
-      });
 }
 
 
@@ -604,27 +425,25 @@ async function submitClaim() {
             showToast('Please describe why this item is yours (at least 10 characters).', 'error'); return;
       }
 
-      requireEmailVerification(email, async () => {
-            try {
-                  await addClaim({
-                        itemId,
-                        name,
-                        email,
-                        sid: document.getElementById('claim-sid').value.trim(),
-                        message,
-                        date: new Date().toLocaleDateString(),
-                        status: 'pending',
-                  });
-                  await updateItem(itemId, { status: 'claimed' });
+      try {
+            await addClaim({
+                  itemId,
+                  name,
+                  email,
+                  sid: document.getElementById('claim-sid').value.trim(),
+                  message,
+                  date: new Date().toLocaleDateString(),
+                  status: 'pending',
+            });
+            await updateItem(itemId, { status: 'claimed' });
 
-                  closeClaimModal();
-                  showToast('Claim submitted! An admin will be in touch.', 'success');
-                  renderBrowse();
-            } catch (err) {
-                  console.error('submitClaim:', err);
-                  showToast('Something went wrong. Please try again.', 'error');
-            }
-      });
+            closeClaimModal();
+            showToast('Claim submitted! An admin will be in touch.', 'success');
+            renderBrowse();
+      } catch (err) {
+            console.error('submitClaim:', err);
+            showToast('Something went wrong. Please try again.', 'error');
+      }
 };
 
 
@@ -657,34 +476,30 @@ function handlePhotoUpload(input) {
 };
 
 // ── AI AUTO-FILL FROM PHOTO ───────────────────────────────────
+// Uses Google Gemini API (browser-CORS-safe)
 
 async function aiAutoFillFromPhoto(base64DataUrl) {
       const btn = document.getElementById('ai-autofill-status');
       if (btn) {
             btn.textContent = '✨ AI is analyzing your photo…';
             btn.style.display = 'block';
+            btn.className = 'ai-status';
       }
 
       try {
-            // Strip the data URL prefix to get raw base64
-            const base64 = base64DataUrl.split(',')[1];
-            const mediaType = base64DataUrl.split(';')[0].split(':')[1];
+            const base64   = base64DataUrl.split(',')[1];
+            const mimeType = base64DataUrl.split(';')[0].split(':')[1];
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
+            const response = await fetch(GEMINI_URL, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        max_tokens: 1000,
-                        messages: [{
-                              role: 'user',
-                              content: [
+                        contents: [{
+                              parts: [
                                     {
-                                          type: 'image',
-                                          source: { type: 'base64', media_type: mediaType, data: base64 }
+                                          inline_data: { mime_type: mimeType, data: base64 }
                                     },
                                     {
-                                          type: 'text',
                                           text: `You are helping a school lost and found website. Look at this image and identify the lost item.
 
 Respond ONLY with a valid JSON object (no markdown, no backticks) with these exact fields:
@@ -695,12 +510,18 @@ Respond ONLY with a valid JSON object (no markdown, no backticks) with these exa
 }`
                                     }
                               ]
-                        }]
+                        }],
+                        generationConfig: { temperature: 0.2, maxOutputTokens: 512 }
                   })
             });
 
+            if (!response.ok) {
+                  const errData = await response.json().catch(() => ({}));
+                  throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+            }
+
             const data = await response.json();
-            const text = data.content?.find(b => b.type === 'text')?.text || '';
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
             let parsed;
             try {
@@ -709,7 +530,6 @@ Respond ONLY with a valid JSON object (no markdown, no backticks) with these exa
                   throw new Error('Could not parse AI response');
             }
 
-            // Fill in the form fields
             if (parsed.name) {
                   const nameEl = document.getElementById('r-name');
                   if (nameEl) nameEl.value = parsed.name;
@@ -717,7 +537,6 @@ Respond ONLY with a valid JSON object (no markdown, no backticks) with these exa
             if (parsed.category) {
                   const catEl = document.getElementById('r-category');
                   if (catEl) {
-                        // Find matching option
                         const opt = [...catEl.options].find(o => o.value === parsed.category);
                         if (opt) catEl.value = parsed.category;
                   }
@@ -760,27 +579,25 @@ async function submitReport(e) {
             showToast('Please enter a more descriptive item name.', 'error'); return;
       }
 
-      requireEmailVerification(email, async () => {
-            try {
-                  await addItem({
-                        name, category, location, date,
-                        description: document.getElementById('r-description').value.trim(),
-                        finder, email,
-                        photo: uploadedPhoto,
-                        status: 'available',
-                        approved: false,
-                  });
+      try {
+            await addItem({
+                  name, category, location, date,
+                  description: document.getElementById('r-description').value.trim(),
+                  finder, email,
+                  photo: uploadedPhoto,
+                  status: 'available',
+                  approved: false,
+            });
 
-                  uploadedPhoto = null;
-                  document.getElementById('report-form').reset();
-                  document.getElementById('upload-preview').innerHTML = '';
-                  document.getElementById('r-date').valueAsDate = new Date();
-                  showToast('Item submitted! It will appear after admin approval.', 'success');
-            } catch (err) {
-                  console.error('submitReport:', err);
-                  showToast('Something went wrong. Please try again.', 'error');
-            }
-      });
+            uploadedPhoto = null;
+            document.getElementById('report-form').reset();
+            document.getElementById('upload-preview').innerHTML = '';
+            document.getElementById('r-date').valueAsDate = new Date();
+            showToast('Item submitted! It will appear after admin approval.', 'success');
+      } catch (err) {
+            console.error('submitReport:', err);
+            showToast('Something went wrong. Please try again.', 'error');
+      }
 };
 
 
@@ -831,27 +648,25 @@ async function submitLostReport(e) {
             showToast('Please enter a more descriptive item name.', 'error'); return;
       }
 
-      requireEmailVerification(email, async () => {
-            try {
-                  await addLostItem({
-                        name, category, lastLocation, dateLost,
-                        description: document.getElementById('rl-description').value.trim(),
-                        ownerName, email,
-                        photo: uploadedLostPhoto,
-                        status: 'seeking',
-                        approved: false,
-                  });
+      try {
+            await addLostItem({
+                  name, category, lastLocation, dateLost,
+                  description: document.getElementById('rl-description').value.trim(),
+                  ownerName, email,
+                  photo: uploadedLostPhoto,
+                  status: 'seeking',
+                  approved: false,
+            });
 
-                  uploadedLostPhoto = null;
-                  document.getElementById('report-lost-form').reset();
-                  document.getElementById('lost-upload-preview').innerHTML = '';
-                  document.getElementById('rl-date').valueAsDate = new Date();
-                  showToast('Lost item reported! It will appear after admin approval.', 'success');
-            } catch (err) {
-                  console.error('submitLostReport:', err);
-                  showToast('Something went wrong. Please try again.', 'error');
-            }
-      });
+            uploadedLostPhoto = null;
+            document.getElementById('report-lost-form').reset();
+            document.getElementById('lost-upload-preview').innerHTML = '';
+            document.getElementById('rl-date').valueAsDate = new Date();
+            showToast('Lost item reported! It will appear after admin approval.', 'success');
+      } catch (err) {
+            console.error('submitLostReport:', err);
+            showToast('Something went wrong. Please try again.', 'error');
+      }
 };
 
 
@@ -1330,31 +1145,6 @@ function bindEvents() {
       document.getElementById('btn-submit-claim')
             ?.addEventListener('click', () => submitClaim());
 
-      // ── Email verification modal ──
-      bindOtpInputs();
-      document.getElementById('btn-verify-modal-close')
-            ?.addEventListener('click', () => closeVerifyModal());
-      document.getElementById('verify-modal')
-            ?.addEventListener('click', e => {
-                  if (e.target === document.getElementById('verify-modal')) closeVerifyModal();
-            });
-      document.getElementById('btn-verify-submit')
-            ?.addEventListener('click', () => verifyOtp());
-      document.getElementById('btn-resend-code')
-            ?.addEventListener('click', e => {
-                  e.preventDefault();
-                  sendVerificationCode(_otpEmail);
-                  // Clear boxes for new code
-                  document.querySelectorAll('.otp-box').forEach(b => {
-                        b.value = '';
-                        b.classList.remove('otp-filled', 'otp-error');
-                  });
-                  document.getElementById('verify-error').style.display = 'none';
-                  document.querySelector('.otp-box')?.focus();
-                  showToast('A new code has been sent.', 'success');
-                  startResendTimer();
-            });
-
       // ── Admin login ──
       document.getElementById('btn-admin-login')
             ?.addEventListener('click', () => adminLogin());
@@ -1456,6 +1246,9 @@ async function sendChatMessage() {
       chatHistory.push({ role: 'user', content: userText });
 
       try {
+            // Build Gemini conversation from chatHistory
+            // chatHistory entries: { role: 'user'|'assistant', content: string }
+            // Gemini uses 'model' instead of 'assistant'
             const systemPrompt = `You are a helpful assistant for a high school lost and found website called FindIt at South Brunswick High School.
 
 You have access to the current list of found items in the database (provided as JSON). Help users find items by answering their questions naturally.
@@ -1469,19 +1262,37 @@ Keep responses concise. If the user asks something unrelated to lost items, gent
 Current found items database:
 ${JSON.stringify(itemSummary, null, 2)}`;
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
+            // Convert history to Gemini format (role: user | model)
+            const geminiHistory = chatHistory.slice(0, -1).map(m => ({
+                  role: m.role === 'assistant' ? 'model' : 'user',
+                  parts: [{ text: m.content }]
+            }));
+
+            // Last message is always the current user turn
+            const lastMsg = chatHistory[chatHistory.length - 1];
+            geminiHistory.push({
+                  role: 'user',
+                  parts: [{ text: lastMsg.content }]
+            });
+
+            const response = await fetch(GEMINI_URL, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        max_tokens: 1000,
-                        system: systemPrompt,
-                        messages: chatHistory
+                        system_instruction: { parts: [{ text: systemPrompt }] },
+                        contents: geminiHistory,
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
                   })
             });
 
-            const data = await response.json();
-            const reply = data.content?.find(b => b.type === 'text')?.text || 'Sorry, I didn\'t understand that.';
+            if (!response.ok) {
+                  const errData = await response.json().catch(() => ({}));
+                  throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+            }
+
+            const data  = await response.json();
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
+                        || 'Sorry, I didn\'t understand that.';
 
             chatHistory.push({ role: 'assistant', content: reply });
             // Keep history short to avoid token bloat
